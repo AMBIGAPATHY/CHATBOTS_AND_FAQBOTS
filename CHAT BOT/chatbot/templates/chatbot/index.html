@@ -1,0 +1,126 @@
+{% extends 'chatbot/base.html' %}
+{% block content %}
+
+<div class="chat-container">
+    <h2>Chatbot</h2>
+    <div class="button-group">
+        <button onclick="showChatbot()">Chatbot</button>
+        <button onclick="showFAQ()">FAQ Chatbot</button>
+    </div>
+    <div id="chatbot" class="chat-box">
+        <div id="chatMessages" class="chat-messages"></div>
+        <div class="input-group">
+            <input type="text" id="userInput" placeholder="Type your message..." onkeypress="checkEnter(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+    <div id="faq" class="chat-box" style="display: none;">
+        <div id="faqMessages" class="chat-messages"></div>
+        <div class="input-group">
+            <input type="text" id="faqInput" placeholder="Type your question..." onkeypress="checkEnterFAQ(event)">
+            <button onclick="sendFAQ()">Send</button>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="csrf_token" value="{{ csrf_token }}">
+
+<script>
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function sendMessage() {
+    let message = document.getElementById("userInput").value;
+    if (message.trim() === "") return;
+
+    let chatMessages = document.getElementById("chatMessages");
+    let userMessage = document.createElement("div");
+    userMessage.className = "message user-message";
+    userMessage.innerText = message;
+    chatMessages.appendChild(userMessage);
+
+    let csrfToken = getCSRFToken();
+
+    fetch("/chatbot_api/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": csrfToken
+        },
+        body: "message=" + encodeURIComponent(message)
+    })
+    .then(response => response.json())
+    .then(data => {
+        let botMessage = document.createElement("div");
+        botMessage.className = "message bot-message";
+        botMessage.innerText = data.response;
+        chatMessages.appendChild(botMessage);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    })
+    .catch(error => console.error("Error:", error));
+
+    document.getElementById("userInput").value = "";
+}
+
+function sendFAQ() {
+    let question = document.getElementById("faqInput").value;
+    if (question.trim() === "") return;
+
+    let faqMessages = document.getElementById("faqMessages");
+    let userQuestion = document.createElement("div");
+    userQuestion.className = "message user-message";
+    userQuestion.innerText = question;
+    faqMessages.appendChild(userQuestion);
+
+    let csrfToken = getCSRFToken();
+
+    fetch("/faq_api/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": csrfToken
+        },
+        body: "question=" + encodeURIComponent(question)
+    })
+    .then(response => response.json())
+    .then(data => {
+        let faqAnswer = document.createElement("div");
+        faqAnswer.className = "message bot-message";
+        faqAnswer.innerText = data.response;
+        faqMessages.appendChild(faqAnswer);
+        faqMessages.scrollTop = faqMessages.scrollHeight;
+    })
+    .catch(error => console.error("Error:", error));
+
+    document.getElementById("faqInput").value = "";
+}
+
+function checkEnter(event) {
+    if (event.key === "Enter") {
+        sendMessage();
+    }
+}
+
+function checkEnterFAQ(event) {
+    if (event.key === "Enter") {
+        sendFAQ();
+    }
+}
+
+function showChatbot() {
+    document.getElementById("chatbot").style.display = "flex";
+    document.getElementById("faq").style.display = "none";
+}
+
+function showFAQ() {
+    document.getElementById("chatbot").style.display = "none";
+    document.getElementById("faq").style.display = "flex";
+}
+</script>
+
+<form method="post">
+    {% csrf_token %}
+</form>
+
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'chatbot/base.html' %}
+{% block content %}
+<div class="chat-container">
+    <h2>AMBIGAPATHY's DJANGO FAQ Chatbot</h2>
+    <div class="chat-box">
+        <div id="chatMessages" class="chat-messages">
+            {% if query %}
+            <div class="message user-message"><strong>Q:</strong> {{ query }}</div>
+            <div class="message bot-message"><strong>A:</strong> {{ answer }}</div>
+            {% endif %}
+        </div>
+        <div class="input-group">
+            <input type="text" id="userInput" name="query" placeholder="Ask a question" onkeypress="checkEnter(event)">
+            <button type="button" onclick="sendMessage()">Ask</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function sendMessage() {
+    let message = document.getElementById("userInput").value;
+    if (message.trim() === "") return;
+
+    let chatMessages = document.getElementById("chatMessages");
+    let userMessage = document.createElement("div");
+    userMessage.className = "message user-message";
+    userMessage.innerHTML = "<strong>Q:</strong> " + message;
+    chatMessages.appendChild(userMessage);
+
+    let form = document.createElement("form");
+    form.method = "GET";
+    form.action = "";
+    let input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "query";
+    input.value = message;
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function checkEnter(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        sendMessage();
+    }
+}
+</script>
+{% endblock %}
